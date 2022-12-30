@@ -16,7 +16,7 @@ const (
 	ValLen = KeyLen - PfxLen
 )
 
-// KCache represents a set membership object
+// KCache represents a set membership object.
 type KCache map[[PfxLen]byte][][ValLen]byte
 
 // In returns true if the given key is present inside the cache,
@@ -35,7 +35,22 @@ func (k KCache) In(key string) bool {
 	return i < len(prefixCache) && prefixCache[i] == value
 }
 
-// LoadCache loads a KCache with keys from a readable interface
+// Add inserts a key into the KCache, disallowing duplicate entries.
+func (k KCache) Add(key string) {
+	prefix, value := getPrefixValue(key)
+
+	prefixCache := k[prefix]
+
+	i := sort.Search(len(prefixCache), func(i int) bool {
+		return string(prefixCache[i][:]) >= string(value[:])
+	})
+	if i < len(prefixCache) && prefixCache[i] == value {
+		return
+	}
+	k[prefix] = insertAt(prefixCache, i, value)
+}
+
+// LoadCache loads a KCache with keys from a readable interface.
 func LoadCache(r io.Reader) (cache KCache, err error) {
 	// Scan IDs line-by-line, divided into prefix/value
 	cache = make(KCache)
@@ -44,7 +59,7 @@ func LoadCache(r io.Reader) (cache KCache, err error) {
 		cache[prefix] = append(cache[prefix], value)
 	}
 
-	// Sort sub-caches to maintain binary search invariance
+	// Sort prefix caches to maintain binary search invariance
 	for _, prefixCache := range cache {
 		sort.Slice(prefixCache, func(i, j int) bool {
 			return string(prefixCache[i][:]) < string(prefixCache[j][:])
@@ -53,7 +68,7 @@ func LoadCache(r io.Reader) (cache KCache, err error) {
 	return cache, nil
 }
 
-// LoadCacheFromFile is a wrapper for loading keys from a given file
+// LoadCacheFromFile is a wrapper for loading keys from a given file.
 func LoadCacheFromFile(filename string) (KCache, error) {
 	f, err := os.Open(filename)
 	if err != nil {
@@ -64,9 +79,19 @@ func LoadCacheFromFile(filename string) (KCache, error) {
 	return LoadCache(f)
 }
 
-// getPrefixValue split a key into fixed-length byte arrays
+// getPrefixValue splits a key into fixed-length byte arrays.
 func getPrefixValue(key string) (pfx [PfxLen]byte, val [ValLen]byte) {
 	copy(pfx[:], key[:PfxLen])
 	copy(val[:], key[PfxLen:])
 	return
+}
+
+func insertAt(data [][ValLen]byte, i int, val [ValLen]byte) [][ValLen]byte {
+	if i == len(data) {
+		return append(data, val)
+	}
+
+	data = append(data[:i+1], data[i:]...)
+	data[i] = val
+	return data
 }

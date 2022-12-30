@@ -11,7 +11,7 @@ const filepath = "../video_ids_sorted.txt"
 
 func main() {
 	start := time.Now()
-	cache, err := kv.LoadCache(filepath)
+	cache, err := kv.LoadCacheFromFile(filepath)
 	if err != nil {
 		log.Fatalln(err)
 	}
