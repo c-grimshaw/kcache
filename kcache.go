@@ -22,10 +22,7 @@ type KCache map[[PfxLen]byte][][ValLen]byte
 // In returns true if the given key is present inside the cache,
 // false otherwise.
 func (k KCache) In(key string) bool {
-	var prefix [PfxLen]byte
-	var value [ValLen]byte
-	copy(prefix[:], key[:PfxLen])
-	copy(value[:], key[PfxLen:])
+	prefix, value := getPrefixValue(key)
 
 	prefixCache, ok := k[prefix]
 	if !ok {
@@ -43,12 +40,7 @@ func LoadCache(r io.Reader) (cache KCache, err error) {
 	// Scan IDs line-by-line, divided into prefix/value
 	cache = make(KCache)
 	for scanner := bufio.NewScanner(r); scanner.Scan(); {
-		var prefix [PfxLen]byte
-		var value [ValLen]byte
-
-		// Split ID into fixed-length byte arrays
-		copy(prefix[:], scanner.Bytes()[:PfxLen])
-		copy(value[:], scanner.Bytes()[PfxLen:])
+		prefix, value := getPrefixValue(scanner.Text())
 		cache[prefix] = append(cache[prefix], value)
 	}
 
@@ -70,4 +62,11 @@ func LoadCacheFromFile(filename string) (KCache, error) {
 	defer f.Close()
 
 	return LoadCache(f)
+}
+
+// getPrefixValue split a key into fixed-length byte arrays
+func getPrefixValue(key string) (pfx [PfxLen]byte, val [ValLen]byte) {
+	copy(pfx[:], key[:PfxLen])
+	copy(val[:], key[PfxLen:])
+	return
 }
