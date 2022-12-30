@@ -62,7 +62,6 @@ func (k KCache) Remove(key string) {
 		return string(prefixCache[i][:]) >= string(value[:])
 	})
 
-<<<<<<< HEAD
 	// Key not present in the prefix cache
 	if i == len(prefixCache) {
 		return
@@ -73,18 +72,6 @@ func (k KCache) Remove(key string) {
 
 	prefixCache = append(prefixCache[:i], prefixCache[i+1:]...)
 	k[prefix] = prefixCache
-=======
-	switch len(prefixCache) {
-	// Not in cache
-	case i:
-	// Last value in prefix cache
-	case 1:
-		delete(k, prefix)
-	default:
-		prefixCache = append(prefixCache[:i], prefixCache[i+1:]...)
-		k[prefix] = prefixCache
-	}
->>>>>>> cdd07ab318489e40787e10b276c554ebaec31a95
 }
 
 // LoadCache loads a KCache with keys from a readable interface.
