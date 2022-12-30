@@ -53,12 +53,16 @@ func (k KCache) Add(key string) {
 }
 
 // LoadCache loads a KCache with keys from a readable interface.
-func LoadCache(r io.Reader) (cache KCache, err error) {
+func LoadCache(r io.Reader) (KCache, error) {
 	// Scan IDs line-by-line, divided into prefix/value
-	cache = make(KCache)
-	for scanner := bufio.NewScanner(r); scanner.Scan(); {
+	scanner, cache := bufio.NewScanner(r), make(KCache)
+	for scanner.Scan() {
 		prefix, value := getPrefixValue(scanner.Text())
 		cache[prefix] = append(cache[prefix], value)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
 	}
 
 	// Sort prefix caches to maintain binary search invariance
