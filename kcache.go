@@ -52,9 +52,30 @@ func (k KCache) Add(key string) {
 	k[prefix] = insertAt(prefixCache, i, value)
 }
 
+// Remove deletes a key in the KCache if it exists.
+func (k KCache) Remove(key string) {
+	prefix, value := getPrefixValue(key)
+	prefixCache := k[prefix]
+
+	// Find insertion index in the sorted array
+	i := sort.Search(len(prefixCache), func(i int) bool {
+		return string(prefixCache[i][:]) >= string(value[:])
+	})
+
+	switch len(prefixCache) {
+	// Not in cache
+	case i:
+	// Last value in prefix cache
+	case 1:
+		delete(k, prefix)
+	default:
+		prefixCache = append(prefixCache[:i], prefixCache[i+1:]...)
+		k[prefix] = prefixCache
+	}
+}
+
 // LoadCache loads a KCache with keys from a readable interface.
 func LoadCache(r io.Reader) (KCache, error) {
-	// Scan IDs line-by-line, divided into prefix/value
 	scanner, cache := bufio.NewScanner(r), make(KCache)
 	for scanner.Scan() {
 		prefix, value := getPrefixValue(scanner.Text())
