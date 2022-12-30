@@ -38,12 +38,14 @@ func (k KCache) In(key string) bool {
 // Add inserts a key into the KCache, disallowing duplicate entries.
 func (k KCache) Add(key string) {
 	prefix, value := getPrefixValue(key)
-
 	prefixCache := k[prefix]
 
+	// Find insertion index in the sorted array
 	i := sort.Search(len(prefixCache), func(i int) bool {
 		return string(prefixCache[i][:]) >= string(value[:])
 	})
+
+	// Ignore duplicate entries
 	if i < len(prefixCache) && prefixCache[i] == value {
 		return
 	}
@@ -86,6 +88,7 @@ func getPrefixValue(key string) (pfx [PfxLen]byte, val [ValLen]byte) {
 	return
 }
 
+// insertAt inserts a value into an array at index i.
 func insertAt(data [][ValLen]byte, i int, val [ValLen]byte) [][ValLen]byte {
 	if i == len(data) {
 		return append(data, val)
